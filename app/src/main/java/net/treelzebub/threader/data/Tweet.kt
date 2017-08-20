@@ -9,7 +9,7 @@ package net.treelzebub.threader.data
  * @property count The number of characters in the tweet
  * @property remaining The remaining character count
  */
-data class Tweet(override var position: Int = 0, var text: String? = null) : Indexed {
+data class Tweet(var number: Int, var text: String? = null) {
 
     companion object {
         private val URL_SCHEMES = listOf("http://", "https://")
@@ -33,3 +33,5 @@ data class Tweet(override var position: Int = 0, var text: String? = null) : Ind
     val count: Int get() = count(text)
     val remaining: Int get() = MAX_TWEET_LENGTH - count
 }
+
+fun List<Tweet>.incrementIndices() = map { Tweet(it.number + 1, it.text) }

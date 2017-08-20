@@ -14,8 +14,9 @@ object TweetStore {
 
     fun persist(c: Context, tweets: List<Tweet>) {
         val editor = prefs(c).edit()
-        tweets.forEach {
-            editor.putString("${it.position}", it.text)
+        tweets.forEachIndexed {
+            i, it ->
+            editor.putString("$i", it.text)
         }
         editor.apply()
     }
@@ -24,9 +25,7 @@ object TweetStore {
     fun load(c: Context): List<Tweet> {
         val prefs = prefs(c)
         val all = prefs.all as Map<String, String>
-        return all.map {
-            Tweet(Integer.parseInt(it.key), it.value)
-        }.sortedBy { it.position }
+        return all.toSortedMap().map { Tweet(Integer.parseInt(it.key), it.value) }
     }
 
     fun clear(c: Context) {

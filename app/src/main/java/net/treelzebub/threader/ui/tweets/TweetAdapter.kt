@@ -4,7 +4,6 @@ import android.content.Context
 import android.support.v7.widget.RecyclerView
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,9 +16,9 @@ import net.treelzebub.threader.android.copyToClipboard
 import net.treelzebub.threader.android.setGone
 import net.treelzebub.threader.android.setVisibleGone
 import net.treelzebub.threader.data.Tweet
-import net.treelzebub.threader.runtime.TAG
+import net.treelzebub.threader.data.incrementIndices
+import net.treelzebub.threader.data.splitAt
 import org.jetbrains.anko.toast
-import java.util.*
 
 /**
  * Created by Tre Murillo on 8/19/2017
@@ -49,26 +48,24 @@ class TweetAdapter(
         }
     }
 
-    fun addTweet(position: Int) {
-        Log.d(TAG, "adding new tweet at position $position")
-        val copy = LinkedList(tweets)
-        copy.add(position, Tweet(position))
-        setTweets(copy)
-        listener.onTweetAdded(position, copy[position])
+    fun addTweet(afterIndex: Int) {
+        val newIndex = afterIndex + 1
+        val split = tweets.splitAt(afterIndex)
+        val first = split.first + Tweet(newIndex)
+        val second = if (first.isEmpty()) split.second else split.second.incrementIndices()
+        setTweets(first + second, newIndex)
+        listener.onTweetAdded(afterIndex, tweets[afterIndex])
     }
 
-    fun removeTweet(index: Int) {
-        val copy = LinkedList(tweets)
-        copy.removeAt(index)
-        if (copy.isEmpty()) clear() else setTweets(copy)
-    }
+//    fun removeTweet(index: Int) {
+//        val split = tweets.splitAt(index - 1)
+//        val copy = split.first.dropLast(1) + split.second.decrementIndices()
+//        if (copy.isEmpty()) clear() else setTweets(copy)
+//    }
 
-    private fun List<Tweet>.indexTweets(): List<Tweet> {
-        return sortedBy { it.position }
-                .mapIndexed { i, it -> Tweet(i + 1, it.text) }
+    fun clear() {
+        tweets = listOf(Tweet(0))
     }
-
-    fun clear() = setTweets(listOf(Tweet()))
 
     override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
         val view = inflater.inflate(R.layout.item_tweet_view, parent, false)
@@ -103,7 +100,8 @@ class TweetAdapter(
             tweetText.setText(tweet.text)
             tweetText.setOnFocusChangeListener { _, hasFocus ->
                 actions.setVisibleGone(hasFocus)
-                if (hasFocus) listener.onTweetFocused(position + 1, tweets.size)
+                val tweetNumber = position + 1
+                if (hasFocus) listener.onTweetFocused(tweetNumber, tweets.size)
             }
 
             tweetText.addTextChangedListener(object : TextWatcher {
@@ -118,12 +116,10 @@ class TweetAdapter(
             count.text = "${tweet.remaining}"
 
             add.setOnClickListener {
-                val newPosition = position + 1
-                Log.d(TAG, "adding after position $position")
-                addTweet(newPosition)
+                addTweet(position)
             }
             remove.setOnClickListener {
-                removeTweet(position)
+//                removeTweet(position)
                 // listener.onTweetRemoved(position)
             }
             copy.setOnClickListener {

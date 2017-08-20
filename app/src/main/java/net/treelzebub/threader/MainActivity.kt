@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
     override fun onResume() {
         super.onResume()
         val saved = TweetStore.load(this)
-        tweetAdapter.setTweets(if (saved.isEmpty()) listOf(Tweet()) else saved)
+        tweetAdapter.setTweets(if (saved.isEmpty()) listOf(Tweet(0)) else saved)
     }
 
     override fun onPause() {
@@ -87,7 +87,6 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
                 Thread.sleep(15L)
             }
             uiThread {
-                Log.d(TAG, "child found at $position (thread position ${tweet.position}), requesting focus.")
                 recycler.layoutManager.scrollToPosition(position)
                 child!!.text.requestFocus()
             }
