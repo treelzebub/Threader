@@ -3,13 +3,13 @@ package net.treelzebub.threader.data
 /**
  * Created by Tre Murillo on 8/19/2017
  *
- * @param index The position of the tweet in the thread
+ * @param position The position of the tweet in the thread
  * @param text The text of the tweet
  *
  * @property count The number of characters in the tweet
  * @property remaining The remaining character count
  */
-data class Tweet(override var index: Int = 0, var text: String? = null) : Indexed {
+data class Tweet(override var position: Int = 0, var text: String? = null) : Indexed {
 
     companion object {
         private val URL_SCHEMES = listOf("http://", "https://")

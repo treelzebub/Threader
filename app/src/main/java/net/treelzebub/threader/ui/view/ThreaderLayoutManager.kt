@@ -5,6 +5,8 @@ import android.graphics.PointF
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.LinearSmoothScroller
 import android.support.v7.widget.RecyclerView
+import android.util.Log
+import net.treelzebub.threader.runtime.TAG
 
 /**
  * Created by Tre Murillo on 8/19/2017
@@ -15,13 +17,17 @@ class ThreaderLayoutManager @JvmOverloads constructor(
         reverseLayout: Boolean = false
 ): LinearLayoutManager(context, orientation, reverseLayout) {
 
+    override fun onItemsAdded(recyclerView: RecyclerView, positionStart: Int, itemCount: Int) {
+        val child = recyclerView.getChildAt(childCount - 1)
+        Log.d(TAG, "added to position ${recyclerView.getChildAdapterPosition(child)}")
+        child.requestFocus()
+    }
+
     override fun smoothScrollToPosition(recyclerView: RecyclerView,
                                         state: RecyclerView.State, position: Int) {
         val smoothScroller = TopSnappedSmoothScroller(recyclerView.context)
         smoothScroller.targetPosition = position
         startSmoothScroll(smoothScroller)
-        recyclerView.getChildAt(0).clearFocus()
-
     }
 
     private inner class TopSnappedSmoothScroller(c: Context) : LinearSmoothScroller(c) {

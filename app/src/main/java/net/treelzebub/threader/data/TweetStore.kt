@@ -1,6 +1,5 @@
 package net.treelzebub.threader.data
 
-import android.annotation.TargetApi
 import android.content.Context
 import android.os.Build
 
@@ -16,7 +15,7 @@ object TweetStore {
     fun persist(c: Context, tweets: List<Tweet>) {
         val editor = prefs(c).edit()
         tweets.forEach {
-            editor.putString("${it.index}", it.text)
+            editor.putString("${it.position}", it.text)
         }
         editor.apply()
     }
@@ -27,7 +26,7 @@ object TweetStore {
         val all = prefs.all as Map<String, String>
         return all.map {
             Tweet(Integer.parseInt(it.key), it.value)
-        }.sortedBy { it.index }
+        }.sortedBy { it.position }
     }
 
     fun clear(c: Context) {
