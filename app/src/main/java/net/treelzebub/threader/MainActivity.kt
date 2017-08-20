@@ -5,17 +5,21 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import kotlinx.android.synthetic.main.activity_main2.*
 import kotlinx.android.synthetic.main.item_tweet_view.view.*
 import net.treelzebub.threader.android.copyToClipboard
 import net.treelzebub.threader.android.dismissKeyboard
-import net.treelzebub.threader.android.onNextLayout
 import net.treelzebub.threader.data.Tweet
 import net.treelzebub.threader.data.TweetStore
+import net.treelzebub.threader.runtime.TAG
 import net.treelzebub.threader.ui.tweets.TweetAdapter
+import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
+import org.jetbrains.anko.uiThread
 
 class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
 
@@ -32,14 +36,14 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
         with(recycler) {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = tweetAdapter
-            addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {}
-                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
-                        dismissKeyboard()
-                    }
-                }
-            })
+//            addOnScrollListener(object : RecyclerView.OnScrollListener() {
+//                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {}
+//                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+//                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+//                        dismissKeyboard()
+//                    }
+//                }
+//            })
         }
     }
 
@@ -47,7 +51,6 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
         super.onResume()
         val saved = TweetStore.load(this)
         tweetAdapter.setTweets(if (saved.isEmpty()) listOf(Tweet()) else saved)
-        ready()
     }
 
     override fun onPause() {
@@ -76,12 +79,17 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
         }
     }
 
-    override fun onTweetAdded(position: Int) {
-        onNextLayout {
-            recycler.layoutManager.apply {
-                scrollToPosition(tweetAdapter.tweets.lastIndex)
-                val child = getChildAt(childCount - 1)
-                child.text.requestFocus()
+    override fun onTweetAdded(position: Int, tweet: Tweet) {
+        doAsync {
+            var child: View? = null
+            while (child == null) {
+                child = recycler.findViewWithTag(tweet)
+                Thread.sleep(15L)
+            }
+            uiThread {
+                Log.d(TAG, "child found at $position (thread position ${tweet.position}), requesting focus.")
+                recycler.layoutManager.scrollToPosition(position)
+                child!!.text.requestFocus()
             }
         }
     }
@@ -92,14 +100,15 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
     }
 
     private fun ready() {
-        val tweetView = recycler.getChildAt(0) ?: return
-        dismissKeyboard()
-        tweetView.requestFocus()
-        val text = tweetView.text.toString()
-        if (text.isNotBlank()) {
-            copyToClipboard(text)
-            toast("Copied tweet.")
-        }
         recycler.smoothScrollToPosition(0)
+        runOnUiThread {
+            val tweetView = recycler.layoutManager.getChildAt(0).text
+            tweetView.selectAll()
+            val text = tweetView.text.toString()
+            if (text.isNotBlank()) {
+                copyToClipboard(text)
+                toast("Copied tweet.")
+            }
+        }
     }
 }
