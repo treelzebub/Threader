@@ -3,15 +3,19 @@ package net.treelzebub.threader.data
 /**
  * Created by Tre Murillo on 8/19/2017
  *
+ * @param index The position of the tweet in the thread
  * @param text The text of the tweet
- * @property count The character count. Defaults to
+ *
+ * @property count The number of characters in the tweet
+ * @property remaining The remaining character count
  */
-data class Tweet(val text: String? = null) {
+data class Tweet(override var index: Int = 0, var text: String? = null) : Indexed {
 
     companion object {
+        private val URL_SCHEMES = listOf("http://", "https://")
+        private const val MAX_TWEET_LENGTH = 140
         // Twitter allows long urls in tweets by only counting the first several characters.
         private const val MAX_URL_LENGTH = 23
-        private val URL_SCHEMES = listOf("http://", "https://")
 
         // TODO handle more than one url in tweet
         fun count(string: String?): Int {
@@ -27,4 +31,5 @@ data class Tweet(val text: String? = null) {
     }
 
     val count: Int get() = count(text)
+    val remaining: Int get() = MAX_TWEET_LENGTH - count
 }

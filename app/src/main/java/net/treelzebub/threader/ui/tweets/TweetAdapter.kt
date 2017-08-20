@@ -21,7 +21,8 @@ import net.treelzebub.threader.data.Tweet
  */
 class TweetAdapter(private val c: Context)  : RecyclerView.Adapter<TweetAdapter.ViewHolder>() {
 
-    private var tweets = listOf<Tweet>()
+    var tweets = listOf<Tweet>()
+        private set
 
     private val inflater by lazy { LayoutInflater.from(c) }
 
@@ -34,26 +35,27 @@ class TweetAdapter(private val c: Context)  : RecyclerView.Adapter<TweetAdapter.
         }
     }
 
-    fun addTweet(index: Int = tweets.lastIndex.coerceAtLeast(0)) {
+    fun addTweet(index: Int) {
         val copy = ArrayList(tweets)
-        copy.add(index, Tweet())
+        copy.add(index, Tweet(index))
         setTweets(copy)
     }
 
-    fun removeTweet(index: Int = tweets.lastIndex) {
+    fun removeTweet(index: Int) {
         val copy = ArrayList(tweets)
         copy.removeAt(index)
+        if (copy.isEmpty()) copy.add(Tweet())
         setTweets(copy)
     }
 
-    fun clear() = setTweets(listOf())
+    fun clear() = setTweets(listOf(Tweet()))
 
     override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
         val view = inflater.inflate(R.layout.item_tweet_view, parent, false)
         return ViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) = holder.set(tweets[position])
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) = holder.set(tweets[position], position)
 
     override fun getItemCount() = tweets.size
 
@@ -62,33 +64,38 @@ class TweetAdapter(private val c: Context)  : RecyclerView.Adapter<TweetAdapter.
     override fun getItemId(position: Int) = tweets[position].hashCode().toLong()
 
     inner class ViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
-        private val tweetText: EditText by lazy { view.text }
-        private val count: TextView by lazy { view.count }
-        private val actions: LinearLayout by lazy { view.actions }
-        private val add: View by lazy { view.more }
-        private val remove: View by lazy { view.less }
-        private val copy: View by lazy { view.copy }
+        private val tweetText: EditText     by lazy { view.text }
+        private val count: TextView         by lazy { view.count }
+        private val actions: LinearLayout   by lazy { view.actions }
+        private val add: View               by lazy { view.more }
+        private val remove: View            by lazy { view.less }
+        private val copy: View              by lazy { view.copy }
 
-        fun set(tweet: Tweet) {
+        fun set(tweet: Tweet, position: Int) {
             tweetText.setText(tweet.text)
-            tweetText.setOnFocusChangeListener { view, hasFocus ->
+            tweetText.setOnFocusChangeListener { _, hasFocus ->
                 actions.visibility = if (hasFocus) View.VISIBLE else View.GONE
             }
-            tweetText.requestFocus()
+//            tweetText.requestFocus()
             tweetText.addTextChangedListener(object : TextWatcher {
                 override fun afterTextChanged(e: Editable?) {}
                 override fun beforeTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {}
                 override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                    tweet.text = s.toString()
                     count.text = "${140 - Tweet.count(s.toString())}"
                     // TODO if count < 10,  red text, Spannable stuff...
                 }
             })
-            count.text = "${140 - tweet.count}"
+            count.text = "${tweet.remaining}"
 
-            add.setOnClickListener { addTweet() }
-            remove.setOnClickListener { removeTweet() }
+            add.setOnClickListener {
+                addTweet(position + 1)
+            }
+            remove.setOnClickListener { removeTweet(position) }
             copy.setOnClickListener {
-                c.copyToClipboard(tweetText.text.toString())
+                val text = tweetText.text.toString()
+                if (text.isBlank()) return@setOnClickListener
+                c.copyToClipboard(text)
                 c.toast("Copied tweet.")
             }
         }
