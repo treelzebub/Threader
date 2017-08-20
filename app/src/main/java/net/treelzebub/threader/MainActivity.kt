@@ -15,7 +15,6 @@ import net.treelzebub.threader.android.onNextLayout
 import net.treelzebub.threader.data.Tweet
 import net.treelzebub.threader.data.TweetStore
 import net.treelzebub.threader.ui.tweets.TweetAdapter
-import net.treelzebub.threader.ui.view.ThreaderLayoutManager
 import org.jetbrains.anko.toast
 
 class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
@@ -36,7 +35,9 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {}
                 override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING) dismissKeyboard()
+                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                        dismissKeyboard()
+                    }
                 }
             })
         }
@@ -77,9 +78,11 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
 
     override fun onTweetAdded(position: Int) {
         onNextLayout {
-            val child = recycler.getChildAt(position) //?: return@onNextLayout
-            child.text.requestFocus()
-            recycler.smoothScrollToPosition(position)
+            recycler.layoutManager.apply {
+                scrollToPosition(tweetAdapter.tweets.lastIndex)
+                val child = getChildAt(childCount - 1)
+                child.text.requestFocus()
+            }
         }
     }
 

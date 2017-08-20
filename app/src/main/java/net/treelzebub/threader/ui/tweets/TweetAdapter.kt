@@ -18,6 +18,7 @@ import net.treelzebub.threader.android.setVisibleGone
 import net.treelzebub.threader.data.Tweet
 import net.treelzebub.threader.runtime.TAG
 import org.jetbrains.anko.toast
+import java.util.*
 
 /**
  * Created by Tre Murillo on 8/19/2017
@@ -39,7 +40,7 @@ class TweetAdapter(
     private val inflater by lazy { LayoutInflater.from(c) }
 
     fun setTweets(tweets: List<Tweet>, indexChanged: Int = -1) {
-        this.tweets = tweets.sortedBy { it.position }
+        this.tweets = tweets.indexTweets()
         if (indexChanged == -1) {
             notifyDataSetChanged()
         } else {
@@ -49,19 +50,24 @@ class TweetAdapter(
 
     fun addTweet(position: Int) {
         Log.d(TAG, "adding new tweet at position $position")
-        val copy = ArrayList(tweets)
-        copy.add(position - 1, Tweet(position))
+        val copy = LinkedList(tweets)
+        copy.add(position, Tweet(position))
         setTweets(copy)
     }
 
     fun removeTweet(index: Int) {
-        val copy = ArrayList(tweets)
+        val copy = LinkedList(tweets)
         copy.removeAt(index)
         if (copy.isEmpty()) clear() else setTweets(copy)
     }
 
-    private fun indexTweets() {
-
+    // move this into a Threading object
+    private fun List<Tweet>.indexTweets(): List<Tweet> {
+        return sortedBy { it.position }
+                .mapIndexed { i, it -> Tweet(i + 1, it.text) }
+                .apply {
+                    Log.d(TAG, map { it.position }.joinToString(", "))
+                }
     }
 
     fun clear() = setTweets(listOf(Tweet()))
@@ -71,7 +77,9 @@ class TweetAdapter(
         return ViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) = holder.set(tweets[position], position)
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.set(tweets[position])
+    }
 
     override fun getItemCount() = tweets.size
 
@@ -87,14 +95,14 @@ class TweetAdapter(
         private val remove: View            by lazy { view.less }
         private val copy: View              by lazy { view.copy }
 
-        fun set(tweet: Tweet, position: Int) {
+        fun set(tweet: Tweet) {
+            val position = tweets.indexOf(tweet)
             tweetText.setText(tweet.text)
             tweetText.setOnFocusChangeListener { _, hasFocus ->
                 actions.setVisibleGone(hasFocus)
                 if (hasFocus) listener.onTweetFocused(position + 1, tweets.size)
             }
 
-            tweetText.requestFocus()
             tweetText.addTextChangedListener(object : TextWatcher {
                 override fun afterTextChanged(e: Editable?) {}
                 override fun beforeTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {}
@@ -108,6 +116,7 @@ class TweetAdapter(
 
             add.setOnClickListener {
                 val newPosition = position + 1
+                Log.d(TAG, "adding after position $position")
                 addTweet(newPosition)
                 listener.onTweetAdded(newPosition)
             }
