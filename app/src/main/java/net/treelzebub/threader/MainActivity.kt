@@ -9,10 +9,9 @@ import android.support.v7.widget.RecyclerView
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import kotlinx.android.synthetic.main.activity_main2.*
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.item_tweet_view.view.*
 import net.treelzebub.threader.android.copyToClipboard
-import net.treelzebub.threader.android.dismissKeyboard
 import net.treelzebub.threader.data.Tweet
 import net.treelzebub.threader.data.TweetStore
 import net.treelzebub.threader.ui.tweets.TweetAdapter
@@ -26,7 +25,7 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main2)
+        setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
         setupRecycler()
     }
@@ -36,14 +35,6 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
             layoutManager = LinearLayoutManager(this@MainActivity)
             itemAnimator = DefaultItemAnimator()
             adapter = tweetAdapter
-            addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {}
-                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
-                        dismissKeyboard()
-                    }
-                }
-            })
         }
     }
 
@@ -83,8 +74,10 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
         // Does its best to request focus on the new view.
         // TODO Probably should find out how to do this properly, cuz this is super hacky.
         doAsync {
-            recycler.layoutManager.smoothScrollToPosition(recycler, RecyclerView.State(), position)
-            Thread.sleep(100L)
+            if (recycler.layoutManager.canScrollVertically()) {
+                recycler.layoutManager.smoothScrollToPosition(recycler, RecyclerView.State(), position)
+                Thread.sleep(100L)
+            }
             uiThread {
                 val child = recycler.findViewWithTag<View>(tweet)
                 child?.text?.requestFocus()
@@ -102,14 +95,20 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
     }
 
     private fun ready() {
-        recycler.smoothScrollToPosition(0)
-        runOnUiThread {
-            val tweetView = recycler.layoutManager.getChildAt(0).text
-            tweetView.selectAll()
-            val text = tweetView.text.toString()
-            if (text.isNotBlank()) {
-                copyToClipboard(text)
-                toast("Copied tweet.")
+        doAsync {
+            recycler.layoutManager.smoothScrollToPosition(recycler, RecyclerView.State(), 0)
+            while (recycler.layoutManager.isSmoothScrolling) {
+                Thread.sleep(100L)
+            }
+            uiThread {
+                val tweetView = recycler.layoutManager.getChildAt(0).text
+                tweetView.requestFocus()
+                tweetView.selectAll()
+                val text = tweetView.text.toString()
+                if (text.isNotBlank()) {
+                    copyToClipboard(text)
+                    toast("Copied tweet.")
+                }
             }
         }
     }

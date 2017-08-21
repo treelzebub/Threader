@@ -1,5 +1,6 @@
 package net.treelzebub.threader.ui.tweets
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.support.annotation.VisibleForTesting
 import android.support.v7.widget.RecyclerView
@@ -105,6 +106,7 @@ class TweetAdapter(
         private val remove: View            by lazy { view.less }
         private val copy: View              by lazy { view.copy }
 
+        @SuppressLint("VisibleForTests")
         fun set(position: Int) {
             val tweet = tweets[position]
             itemView.tag = tweet
