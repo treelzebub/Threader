@@ -3,13 +3,16 @@ package net.treelzebub.threader
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.DefaultItemAnimator
 import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import kotlinx.android.synthetic.main.activity_main2.*
 import kotlinx.android.synthetic.main.item_tweet_view.view.*
 import net.treelzebub.threader.android.copyToClipboard
+import net.treelzebub.threader.android.dismissKeyboard
 import net.treelzebub.threader.data.Tweet
 import net.treelzebub.threader.data.TweetStore
 import net.treelzebub.threader.ui.tweets.TweetAdapter
@@ -31,15 +34,16 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
     private fun setupRecycler() {
         with(recycler) {
             layoutManager = LinearLayoutManager(this@MainActivity)
+            itemAnimator = DefaultItemAnimator()
             adapter = tweetAdapter
-//            addOnScrollListener(object : RecyclerView.OnScrollListener() {
-//                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {}
-//                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-//                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
-//                        dismissKeyboard()
-//                    }
-//                }
-//            })
+            addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {}
+                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                        dismissKeyboard()
+                    }
+                }
+            })
         }
     }
 
@@ -77,14 +81,12 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
 
     override fun onTweetAdded(position: Int, tweet: Tweet) {
         doAsync {
-            var child: View? = null
-            while (child == null) {
-                child = recycler.findViewWithTag(tweet)
-                Thread.sleep(15L)
-            }
+            recycler.layoutManager.smoothScrollToPosition(recycler, RecyclerView.State(), position)
+            Thread.sleep(100L)
             uiThread {
-                recycler.layoutManager.scrollToPosition(position)
-                child!!.text.requestFocus()
+                val child = recycler.findViewWithTag<View>(tweet)
+                child?.text?.requestFocus()
+                toast("$child")
             }
         }
     }

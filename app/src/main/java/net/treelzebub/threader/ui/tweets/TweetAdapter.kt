@@ -33,6 +33,10 @@ class TweetAdapter(
         fun onTweetFocused(tweetNumber: Int, total: Int)
     }
 
+    init {
+        setHasStableIds(true)
+    }
+
     var tweets = listOf<Tweet>()
         private set
 
