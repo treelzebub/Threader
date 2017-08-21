@@ -1,6 +1,7 @@
 package net.treelzebub.threader.ui.tweets
 
 import android.content.Context
+import android.support.annotation.VisibleForTesting
 import android.support.v7.widget.RecyclerView
 import android.text.Editable
 import android.text.TextWatcher
@@ -16,8 +17,6 @@ import net.treelzebub.threader.android.copyToClipboard
 import net.treelzebub.threader.android.setGone
 import net.treelzebub.threader.android.setVisibleGone
 import net.treelzebub.threader.data.Tweet
-import net.treelzebub.threader.data.incrementIndices
-import net.treelzebub.threader.data.splitAt
 import org.jetbrains.anko.toast
 
 /**
@@ -30,7 +29,7 @@ class TweetAdapter(
 
     interface TweetAdapterListener {
         fun onTweetAdded(position: Int, tweet: Tweet)
-//        fun onTweetRemoved(position: Int)
+        fun onTweetRemoved(position: Int)
         fun onTweetFocused(tweetNumber: Int, total: Int)
     }
 
@@ -39,32 +38,44 @@ class TweetAdapter(
 
     private val inflater by lazy { LayoutInflater.from(c) }
 
-    fun setTweets(tweets: List<Tweet>, indexChanged: Int = -1) {
-        this.tweets = tweets
-        if (indexChanged == -1) {
-            notifyDataSetChanged()
+    fun load(tweets: List<Tweet> = listOf()) {
+        if (tweets.isEmpty()) {
+            this.tweets = listOf(Tweet(0))
         } else {
-            notifyItemInserted(indexChanged)
+            this.tweets = tweets
         }
+        notifyDataSetChanged()
     }
 
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     fun addTweet(afterIndex: Int) {
         val newIndex = afterIndex + 1
-        val split = tweets.splitAt(afterIndex)
-        val first = split.first + Tweet(newIndex)
-        val second = if (first.isEmpty()) split.second else split.second.incrementIndices()
-        setTweets(first + second, newIndex)
-        listener.onTweetAdded(afterIndex, tweets[afterIndex])
+        val copy = tweets.toMutableList()
+        copy.add(newIndex, Tweet(newIndex))
+        tweets = copy.indexTweets()
+        notifyItemInserted(newIndex)
+        listener.onTweetAdded(newIndex, tweets[newIndex])
     }
 
-//    fun removeTweet(index: Int) {
-//        val split = tweets.splitAt(index - 1)
-//        val copy = split.first.dropLast(1) + split.second.decrementIndices()
-//        if (copy.isEmpty()) clear() else setTweets(copy)
-//    }
+    private fun List<Tweet>.indexTweets() = mapIndexed { i, it -> Tweet(i, it.text) }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    fun removeTweet(index: Int) {
+        val copy = tweets.toMutableList()
+        copy.removeAt(index)
+        tweets = copy.indexTweets()
+        if (tweets.isEmpty()) {
+            load()
+            notifyItemChanged(index)
+        } else {
+            notifyItemRemoved(index)
+        }
+        listener.onTweetRemoved(index)
+    }
 
     fun clear() {
         tweets = listOf(Tweet(0))
+        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
@@ -119,8 +130,7 @@ class TweetAdapter(
                 addTweet(position)
             }
             remove.setOnClickListener {
-//                removeTweet(position)
-                // listener.onTweetRemoved(position)
+                removeTweet(position)
             }
             copy.setOnClickListener {
                 val text = tweetText.text.toString()

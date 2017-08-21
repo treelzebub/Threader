@@ -4,18 +4,14 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import kotlinx.android.synthetic.main.activity_main2.*
 import kotlinx.android.synthetic.main.item_tweet_view.view.*
 import net.treelzebub.threader.android.copyToClipboard
-import net.treelzebub.threader.android.dismissKeyboard
 import net.treelzebub.threader.data.Tweet
 import net.treelzebub.threader.data.TweetStore
-import net.treelzebub.threader.runtime.TAG
 import net.treelzebub.threader.ui.tweets.TweetAdapter
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
@@ -50,7 +46,7 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
     override fun onResume() {
         super.onResume()
         val saved = TweetStore.load(this)
-        tweetAdapter.setTweets(if (saved.isEmpty()) listOf(Tweet(0)) else saved)
+        tweetAdapter.load(saved)
     }
 
     override fun onPause() {
@@ -91,6 +87,10 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
                 child!!.text.requestFocus()
             }
         }
+    }
+
+    override fun onTweetRemoved(position: Int) {
+        toast("Removed tweet ${position + 1}")
     }
 
     @SuppressLint("SetTextI18n")

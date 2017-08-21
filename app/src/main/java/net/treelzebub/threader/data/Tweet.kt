@@ -33,5 +33,3 @@ data class Tweet(var number: Int, var text: String? = null) {
     val count: Int get() = count(text)
     val remaining: Int get() = MAX_TWEET_LENGTH - count
 }
-
-fun List<Tweet>.incrementIndices() = map { Tweet(it.number + 1, it.text) }
