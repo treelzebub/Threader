@@ -60,7 +60,7 @@ class TweetAdapter(
         val copy = tweets.toMutableList()
         copy.add(newIndex, Tweet(newIndex))
         tweets = copy.indexTweets()
-        notifyItemInserted(newIndex)
+        notifyItemInserted(newIndex + 1)
         listener.onTweetAdded(newIndex, tweets[newIndex])
     }
 
