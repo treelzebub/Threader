@@ -33,6 +33,8 @@ dependencies {
     implementation "com.android.support:cardview-v7:26.0.1"
     implementation "org.jetbrains.anko:anko:0.10.1"
 
+    implementation 'jp.wasabeef:recyclerview-animators:2.2.7'
+
     testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     testImplementation 'junit:junit:4.12'
     testImplementation "org.robolectric:robolectric:3.4.2"

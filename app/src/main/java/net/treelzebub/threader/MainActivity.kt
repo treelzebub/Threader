@@ -9,6 +9,7 @@ import android.support.v7.widget.RecyclerView
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.item_tweet_view.view.*
 import net.treelzebub.threader.android.copyToClipboard
@@ -34,7 +35,7 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
     private fun setupRecycler() {
         with(recycler) {
             layoutManager = LinearLayoutManager(this@MainActivity)
-            itemAnimator = DefaultItemAnimator()
+            itemAnimator = SlideInLeftAnimator()
             adapter = tweetAdapter
         }
     }

@@ -16,8 +16,10 @@ import kotlinx.android.synthetic.main.item_tweet_view.view.*
 import net.treelzebub.threader.R
 import net.treelzebub.threader.android.copyToClipboard
 import net.treelzebub.threader.android.setGone
+import net.treelzebub.threader.android.setVisible
 import net.treelzebub.threader.android.setVisibleGone
 import net.treelzebub.threader.data.Tweet
+import org.jetbrains.anko.sdk25.coroutines.onClick
 import org.jetbrains.anko.toast
 
 /**
@@ -69,11 +71,9 @@ class TweetAdapter(
         val copy = tweets.toMutableList()
         copy.removeAt(index)
         tweets = copy.indexTweets()
+        notifyItemRemoved(index)
         if (tweets.isEmpty()) {
             load()
-            notifyItemChanged(index)
-        } else {
-            notifyItemRemoved(index)
         }
         listener.onTweetRemoved(index)
     }
@@ -121,6 +121,7 @@ class TweetAdapter(
                 if (hasFocus) listener.onTweetFocused(tweetNumber, tweets.size)
             }
 
+
             tweetText.addTextChangedListener(object : TextWatcher {
                 override fun afterTextChanged(e: Editable?) {}
                 override fun beforeTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {}
@@ -144,6 +145,8 @@ class TweetAdapter(
                 c.copyToClipboard(text)
                 c.toast("Copied tweet.")
             }
+
+            if (tweets.size == 1) actions.setVisible()
         }
     }
 }
