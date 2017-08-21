@@ -80,13 +80,14 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
     }
 
     override fun onTweetAdded(position: Int, tweet: Tweet) {
+        // Does its best to request focus on the new view.
+        // TODO Probably should find out how to do this properly, cuz this is super hacky.
         doAsync {
             recycler.layoutManager.smoothScrollToPosition(recycler, RecyclerView.State(), position)
             Thread.sleep(100L)
             uiThread {
                 val child = recycler.findViewWithTag<View>(tweet)
                 child?.text?.requestFocus()
-                toast("$child")
             }
         }
     }
