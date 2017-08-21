@@ -15,6 +15,7 @@ import net.treelzebub.threader.android.copyToClipboard
 import net.treelzebub.threader.data.Tweet
 import net.treelzebub.threader.data.TweetStore
 import net.treelzebub.threader.ui.tweets.TweetAdapter
+import org.jetbrains.anko.alert
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
@@ -61,9 +62,14 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
                 true
             }
             R.id.action_clear -> {
-                // TODO are you sure?
-                TweetStore.clear(this)
-                tweetAdapter.clear()
+                alert {
+                    message = "Clear thread?"
+                    positiveButton("Yes") {
+                        TweetStore.clear(this@MainActivity)
+                        tweetAdapter.clear()
+                    }
+                    negativeButton("No", {})
+                }.show()
                 true
             }
             else -> super.onOptionsItemSelected(item)
