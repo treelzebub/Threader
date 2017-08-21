@@ -76,7 +76,9 @@ class MainActivity : AppCompatActivity(), TweetAdapter.TweetAdapterListener {
         doAsync {
             if (recycler.layoutManager.canScrollVertically()) {
                 recycler.layoutManager.smoothScrollToPosition(recycler, RecyclerView.State(), position)
-                Thread.sleep(100L)
+                while (recycler.layoutManager.isSmoothScrolling) {
+                    Thread.sleep(100L)
+                }
             }
             uiThread {
                 val child = recycler.findViewWithTag<View>(tweet)
